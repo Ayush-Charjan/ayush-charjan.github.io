@@ -3,671 +3,951 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Ayush Charjan — Terminal (Header fixed, Terminal fills to Footer)</title>
-<style>
-  :root{
-    --bg:#000;
-    --green:#0f0;
-    --teal:#00ffff;
-    --container-width:1200px;
-    --sidebar-width:260px;
-    --gutter:18px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;font-family:"Courier New",monospace}
-  html,body{height:100%;background:var(--bg);color:var(--green);overflow:hidden}
-
-  /* ----- Fixed header ----- */
-  .top-header{
-    position:fixed;
-    top:0;
-    left:0;
-    right:0;
-    z-index:200;
-    background:linear-gradient(90deg, rgba(0,255,0,0.03), transparent);
-    border-bottom:1px solid rgba(0,255,0,0.06);
-    padding:14px calc(var(--gutter) + 6px);
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-    .ascii{
-        color:var(--green);
-        white-space:pre-wrap;
-        font-size:11px;
-        line-height:1;
-        max-width:var(--container-width);
-        margin:0 auto;
-    }
-  .top-row{
-    max-width:var(--container-width);
-    margin:0 auto;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-  }
-  .datetime{font-size:12px;color:#bfffbf;letter-spacing:0.4px;white-space:nowrap}
-  .badge{font-size:12px;color:var(--teal);opacity:0.95}
-
-  /* ----- Fixed footer ----- */
-  .bottom-footer{
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:200;
-    background:linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,255,0,0.02));
-    border-top:1px solid rgba(0,255,0,0.03);
-    padding:8px calc(var(--gutter) + 6px);
-    font-size:12px;
-    color:#bfffbf;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-  }
-
-  /* ----- Page content wrapper (space reserved for sidebar) ----- */
-  .page {
-    max-width:var(--container-width);
-    margin:0 auto;
-    padding-left:calc(var(--gutter));
-    padding-right:calc(var(--sidebar-width) + var(--gutter) * 2);
-    /* top/bottom padding will be set by JS using header/footer heights */
-  }
-
-  /* ----- Main box containing terminal ----- */
-  .main-wrap {
-    margin:0 auto;
-    background:rgba(0,0,0,0.6);
-    border-radius:8px;
-    box-shadow:0 10px 40px rgba(0,255,0,0.02);
-    overflow:hidden;
-  }
-
-  /* Terminal is a column: content area scrolls, input pinned at bottom of terminal -->
-     We'll size the terminal via JS to fit between header and footer */
-  .terminal {
-    display:flex;
-    flex-direction:column;
-    height:100%;
-    min-height:160px;
-    background:rgba(0,0,0,0.45);
-    border-radius:6px;
-  }
-
-  .terminal .term-content {
-    padding:8px 14px; /* tightened padding to reduce top gap */
-    overflow:auto; /* only this area scrolls */
-    -webkit-overflow-scrolling: touch;
-    flex:1 1 auto;
-    font-size:13px;
-    line-height:1.45;
-    color:var(--green);
-  }
-
-  .terminal .term-input {
-    display:flex;
-    gap:10px;
-    align-items:center;
-    padding:10px 14px;
-    border-top:1px solid rgba(0,255,0,0.03);
-    background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.06));
-    flex:0 0 auto;
-  }
-
-  .prompt { color:var(--teal); flex:0 0 auto; white-space:nowrap }
-  #command-input { flex:1; background:transparent; border:0; outline:none; color:#fff; font-family:inherit; font-size:15px; caret-color:var(--green) }
-  .cursor { width:10px; height:18px; background:var(--green); display:inline-block; animation:blink 1s steps(2,start) infinite; border-radius:2px }
-  @keyframes blink { 50% { opacity:0 } }
-
-  .output.header { white-space:pre-wrap; font-size:13px; margin-bottom:10px; color:var(--green) }
-  .output { white-space:pre-wrap; margin-bottom:8px }
-  .output a { color:var(--teal); text-decoration:underline; cursor:pointer; }
-  .output a:hover { color:#fff; }
-
-  /* ----- Fixed right sidebar ----- */
-  .sidebar {
-    position:fixed;
-    right:calc(var(--gutter));
-    width:var(--sidebar-width);
-    max-width:90vw;
-    top:calc(50px); /* will be updated by JS to sit below header */
-    height:calc(100vh - 120px); /* updated by JS */
-    background:rgba(0,0,0,0.45);
-    border:1px solid rgba(0,255,0,0.04);
-    padding:12px;
-    border-radius:8px;
-    overflow:auto;
-    z-index:180;
-  }
-  .card { background:rgba(0,0,0,0.45); padding:12px; border-radius:6px; border:1px solid rgba(0,255,0,0.04); font-size:13px; margin-bottom:12px }
-  .card .title { font-size:13px; font-weight:700; margin-bottom:8px; color:#bfffbf }
-  .stat-row { display:flex; justify-content:space-between; align-items:center; margin:8px 0 }
-  .stat-label { color:#bfffbf; font-size:12px }
-  .stat-value { font-weight:700; color:#fff }
-  .bar-wrap { background:rgba(0,255,0,0.06); height:12px; border-radius:999px; overflow:hidden; border:1px solid rgba(0,255,0,0.03) }
-  .bar-inner { height:100%; width:0%; background:linear-gradient(90deg,var(--green),#5aff5a); transition:width 120ms linear }
-  .noise { font-size:12px; color:#9ff99f; white-space:nowrap; overflow:hidden }
-
-  /* small screens: sidebar becomes bottom stacked area and layout becomes scrollable */
-  @media (max-width:980px) {
-    html,body { overflow:auto; } /* allow whole-page scroll on mobile */
-    .sidebar { position:relative; width:100%; right:0; top:auto; height:auto; margin:12px 0 0 0; }
-    .page { padding-right:var(--gutter); padding-left:var(--gutter); }
-  }
-
-  /* scrollbars */
-  .term-content::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width:10px }
-  .term-content::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb { background:rgba(0,255,0,0.12); border-radius:6px }
-
-  .hint { font-size:12px; color:#bfffbf; margin-top:8px }
-
-</style>
+<title>Ayush Charjan | Cybersecurity Terminal Portfolio</title>
+<meta name="description" content="Ayush Charjan's interactive terminal-style portfolio featuring cybersecurity projects, skills, experience, and contact links." />
+<meta property="og:title" content="Ayush Charjan | Cybersecurity Terminal Portfolio" />
+<meta property="og:description" content="Explore Ayush Charjan's cybersecurity-focused interactive terminal portfolio." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://ayush-charjan.github.io/" />
+<meta name="twitter:card" content="summary" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./index.css" />
 </head>
-<body>
-  <!-- ===== Fixed header ===== -->
-  <header class="top-header" id="topHeader" role="banner" aria-hidden="false">
-    <div class="ascii" aria-hidden="true">
-╔═════════════════════════════════════════════════════════╗
-║                                                         ║
-║     █████╗ ██╗   ██╗██╗   ██╗███████╗██╗  ██╗           ║
-║    ██╔══██╗╚██╗ ██╔╝██║   ██║██╔════╝██║  ██║           ║
-║    ███████║ ╚████╔╝ ██║   ██║███████╗███████║           ║
-║    ██╔══██║  ╚██╔╝  ██║   ██║╚════██║██╔══██║           ║
-║    ██║  ██║   ██║   ╚██████╔╝███████║██║  ██║           ║
-║    ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚══════╝╚═╝  ╚═╝           ║
-║   Cyber Security | Python Developer | Cloud Computing | ║
-║              CYBERSECURITY TERMINAL v1.0                ║
-║                                                         ║
-╚═════════════════════════════════════════════════════════╝
-    <div class="top-row">
-      <div class="datetime" id="live-datetime">Loading time...</div>
-      <div class="badge">status: <strong id="status-badge">OK</strong></div>
-    </div>
-  </header>
+<body class="crt-active">
 
-  <!-- ===== Page wrapper ===== -->
-  <div class="page" id="page">
-    <div class="main-wrap" id="mainWrap">
-      <!-- Terminal occupies the full height between header & footer (set by JS) -->
-      <div class="terminal" id="terminal">
-        <div class="term-content" id="termContent" role="region" aria-live="polite">
-          <div class="output header">Welcome to Ayush Charjan's Interactive Terminal Portfolio
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<!-- Boot Screen -->
+<div class="boot-screen" id="bootScreen">
+  <div class="boot-text" id="bootText"></div>
+</div>
 
-Type 'help' to see available commands or start exploring!</div>
-          <!-- Employer-friendly message will appear here automatically -->
-          <div id="outputContainer"></div>
-        </div>
+<!-- Matrix Rain Canvas -->
+<canvas id="matrix-canvas"></canvas>
 
-        <!-- Input stays visible at bottom of terminal -->
+<!-- Header -->
+<header class="top-header" id="topHeader" role="banner">
+  <div class="ascii" aria-hidden="true">
+ █████╗ ██╗   ██╗██╗   ██╗███████╗██╗  ██╗     ██████╗██╗  ██╗ █████╗ ██████╗      ██╗ █████╗ ███╗   ██╗
+██╔══██╗╚██╗ ██╔╝██║   ██║██╔════╝██║  ██║    ██╔════╝██║  ██║██╔══██╗██╔══██╗     ██║██╔══██╗████╗  ██║
+███████║ ╚████╔╝ ██║   ██║███████╗███████║    ██║     ███████║███████║██████╔╝     ██║███████║██╔██╗ ██║
+██╔══██║  ╚██╔╝  ██║   ██║╚════██║██╔══██║    ██║     ██╔══██║██╔══██║██╔══██╗██   ██║██╔══██║██║╚██╗██║
+██║  ██║   ██║   ╚██████╔╝███████║██║  ██║    ╚██████╗██║  ██║██║  ██║██║  ██║╚█████╔╝██║  ██║██║ ╚████║
+╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚══════╝╚═╝  ╚═╝     ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝</div>
+  <div class="top-row">
+    <div class="datetime" id="live-datetime">--:--:--</div>
+    <div class="badge"><span class="status-dot"></span> <span id="status-badge">ONLINE</span></div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="page" id="page" role="main">
+  <h1 class="sr-only">Ayush Charjan Cybersecurity Terminal Portfolio</h1>
+  <div class="main-wrap" id="mainWrap">
+    <div class="terminal" id="terminal">
+      <div class="term-content" id="termContent" role="log" aria-live="polite">
+        <div id="outputContainer"></div>
+      </div>
+      <div class="term-input-wrap">
+        <div class="autocomplete" id="autocomplete"></div>
         <div class="term-input" id="inputArea">
-          <span class="prompt">ayush@terminal:~$</span>
-          <input id="command-input" autocomplete="off" spellcheck="false" aria-label="terminal input" />
+          <span class="prompt"><span class="user">ayush</span><span class="at">@</span><span class="host">portfolio</span><span class="colon">:</span><span class="path">~</span><span class="symbol">$</span></span>
+          <input id="command-input" autocomplete="off" spellcheck="false" aria-label="Terminal input" />
           <span class="cursor" aria-hidden="true"></span>
         </div>
       </div>
-      <div class="hint">Tip: Press <strong>Ctrl+L</strong> to clear terminal output. Sidebar (right) is fixed.</div>
     </div>
+    <div class="hint">💡 Type <strong>help</strong> for commands · <strong>Tab</strong> autocomplete · <strong>↑↓</strong> history</div>
   </div>
+</main>
 
-  <!-- ===== Fixed right sidebar ===== -->
-  <aside class="sidebar" id="sidebar" aria-label="Live stats and network">
-    <div class="card" id="liveCard">
-      <div class="title">Live Stats</div>
-      <div class="stat-row"><div class="stat-label">Progress</div><div class="stat-value" id="progress-label">0%</div></div>
-      <div class="bar-wrap" aria-hidden="true"><div class="bar-inner" id="progress-bar"></div></div>
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar" aria-label="System stats">
+  <div class="card">
+    <div class="title">System Monitor</div>
+    <div class="stat-row"><div class="stat-label">Uptime</div><div class="stat-value" id="uptime">0:00:00</div></div>
+    <div class="stat-row"><div class="stat-label">CPU</div><div class="stat-value" id="cpu">0%</div></div>
+    <div class="bar-wrap"><div class="bar-inner" id="cpu-bar"></div></div>
+    <div style="height:8px"></div>
+    <div class="stat-row"><div class="stat-label">Memory</div><div class="stat-value" id="memory">0%</div></div>
+    <div class="bar-wrap"><div class="bar-inner" id="memory-bar"></div></div>
+  </div>
+  <div class="card">
+    <div class="title">Network</div>
+    <div class="stat-row"><div class="stat-label">↑ Upload</div><div class="stat-value" id="upload">0 KB/s</div></div>
+    <div class="stat-row"><div class="stat-label">↓ Download</div><div class="stat-value" id="download">0 KB/s</div></div>
+    <div class="stat-row"><div class="stat-label">Connections</div><div class="stat-value" id="connections">0</div></div>
+    <div style="height:8px"></div>
+    <div class="title" style="font-size:9px;margin-bottom:4px">Activity Log</div>
+    <div class="noise" id="console-feed">initializing...</div>
+  </div>
+</aside>
 
-      <div style="height:10px"></div>
-
-      <div class="stat-row"><div class="stat-label">Upload</div><div class="stat-value" id="upload">0.0 KB/s</div></div>
-      <div class="stat-row"><div class="stat-label">Download</div><div class="stat-value" id="download">0.0 KB/s</div></div>
-      <div class="stat-row"><div class="stat-label">CPU</div><div class="stat-value" id="cpu">0%</div></div>
-    </div>
-
-    <div class="card" id="networkCard">
-      <div class="title">Network</div>
-      <div class="stat-row"><div class="stat-label">Active Connections</div><div class="stat-value" id="connections">0</div></div>
-      <div class="stat-row"><div class="stat-label">Packets/sec</div><div class="stat-value" id="packets">0</div></div>
-
-      <div style="height:10px"></div>
-      <div class="title" style="font-size:12px;margin-bottom:6px">Console Feed</div>
-      <div class="noise" id="console-feed">initializing...</div>
-    </div>
-  </aside>
-
-  <!-- ===== Fixed footer ===== -->
-  <footer class="bottom-footer" id="bottomFooter" role="contentinfo">
-    © Ayush Charjan — Interactive Terminal Portfolio · Built with HTML/CSS/JS
-  </footer>
+<!-- Footer -->
+<footer class="bottom-footer" id="bottomFooter" role="contentinfo">
+  <span>© 2024 Ayush Charjan</span>
+  <div class="footer-shortcuts">
+    <span><kbd>Ctrl</kbd>+<kbd>L</kbd> clear</span>
+    <span><kbd>Tab</kbd> complete</span>
+    <span><kbd>↑</kbd><kbd>↓</kbd> history</span>
+  </div>
+</footer>
 
 <script>
 (function(){
-  // DOM refs
-  const header = document.getElementById('topHeader');
-  const footer = document.getElementById('bottomFooter');
-  const page = document.getElementById('page');
-  const mainWrap = document.getElementById('mainWrap');
-  const terminal = document.getElementById('terminal');
-  const termContent = document.getElementById('termContent');
-  const sidebar = document.getElementById('sidebar');
-  const outputContainer = document.getElementById('outputContainer');
+  // === BOOT SEQUENCE ===
+  const bootScreen = document.getElementById('bootScreen');
+  const bootText = document.getElementById('bootText');
+  const bootLines = [
+    'BIOS v2.4.1 - Secure Boot Enabled',
+    'Initializing hardware...',
+    'CPU: AMD Ryzen 9 5900X @ 3.7GHz [OK]',
+    'Memory: 32GB DDR4-3600 [OK]',
+    'Storage: 1TB NVMe SSD [OK]',
+    'Network: Intel I225-V 2.5GbE [OK]',
+    '',
+    'Loading kernel modules...',
+    '  [OK] security/firewall',
+    '  [OK] crypto/ssl',
+    '  [OK] net/tcp_stack',
+    '  [OK] fs/encrypted',
+    '',
+    'Starting system services...',
+    '  [OK] sshd',
+    '  [OK] nginx',
+    '  [OK] postgresql',
+    '',
+    'Running security checks...',
+    '  [OK] Firewall active',
+    '  [OK] Intrusion detection online',
+    '  [OK] All systems nominal',
+    '',
+    'Welcome to AyushOS v1.0.0',
+    'Type "help" for available commands.',
+    ''
+  ];
 
-  // set mainWrap/terminal height so that terminal fills from below header to above footer
-  function layoutTerminal() {
-    const headerH = header.offsetHeight;
-    const footerH = footer.offsetHeight;
+  let bootIdx = 0;
+  let bootContent = '';
+  const bootCursor = document.createElement('span');
+  bootCursor.className = 'boot-cursor';
 
-    // reserve header/footer space by padding the page container
-    page.style.paddingTop = headerH + 'px';
-    page.style.paddingBottom = footerH + 'px';
-
-    // compute available height between header bottom and footer top
-    const extraPadding = 18; // small breathing room
-    const available = Math.max(160, window.innerHeight - headerH - footerH - extraPadding);
-
-    // ensure mainWrap sits flush inside page padding
-    mainWrap.style.marginTop = '0px';
-    mainWrap.style.marginBottom = '12px';
-
-    // set terminal to fill this computed height
-    terminal.style.height = available + 'px';
-
-    // position & size sidebar (fixed)
-    const gap = 18;
-    const sidebarTop = headerH + gap;
-    sidebar.style.top = sidebarTop + 'px';
-    const sbHeight = Math.max(160, window.innerHeight - sidebarTop - footerH - gap);
-    sidebar.style.height = sbHeight + 'px';
-
-    // ensure content visible at top
-    termContent.scrollTop = 0;
-  }
-
-  window.addEventListener('load', layoutTerminal);
-  window.addEventListener('resize', layoutTerminal);
-  const ro = new ResizeObserver(layoutTerminal);
-  ro.observe(header);
-  ro.observe(footer);
-
-  // ----- live datetime with microsecond-ish precision -----
-  function formatLiveTime(nowDate, perfNow){
-    const yyyy = nowDate.getFullYear().toString().padStart(4,'0');
-    const mm = (nowDate.getMonth()+1).toString().padStart(2,'0');
-    const dd = nowDate.getDate().toString().padStart(2,'0');
-    const hh = nowDate.getHours().toString().padStart(2,'0');
-    const min = nowDate.getMinutes().toString().padStart(2,'0');
-    const sec = nowDate.getSeconds().toString().padStart(2,'0');
-    const ms = nowDate.getMilliseconds().toString().padStart(3,'0');
-    const micro = Math.floor((perfNow % 1) * 1000).toString().padStart(3,'0');
-    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${sec}.${ms}${micro}`;
-  }
-  function tickTime(){
-    const now = new Date();
-    const p = performance.now();
-    const live = document.getElementById('live-datetime');
-    if(live) live.textContent = formatLiveTime(now, p);
-    requestAnimationFrame(tickTime);
-  }
-  tickTime();
-
-  // ----- fake dynamic sidebar stats -----
-  const progressBar = document.getElementById('progress-bar');
-  const progressLabel = document.getElementById('progress-label');
-  const uploadEl = document.getElementById('upload');
-  const downloadEl = document.getElementById('download');
-  const cpuEl = document.getElementById('cpu');
-  const connEl = document.getElementById('connections');
-  const packetsEl = document.getElementById('packets');
-  const consoleFeed = document.getElementById('console-feed');
-  const statusBadge = document.getElementById('status-badge');
-
-  function rand(min,max){ return Math.random()*(max-min)+min; }
-  let p = 0, dir = 1;
-  function updateStats(){
-    p += dir * (rand(0.2, 1.6));
-    if(p >= 100){ p = 100; dir = -1; }
-    if(p <= 0){ p = 0; dir = 1; }
-    const pRounded = Math.round(p);
-    progressBar.style.width = pRounded + '%';
-    progressLabel.textContent = pRounded + '%';
-
-    const upload = (rand(5, 500) * (0.2 + p/200)).toFixed(1);
-    const download = (rand(10, 1200) * (0.2 + (100-p)/200)).toFixed(1);
-    uploadEl.textContent = `${upload} KB/s`;
-    downloadEl.textContent = `${download} KB/s`;
-
-    const cpu = Math.round(rand(6, 18) + p/5 + rand(-3,3));
-    cpuEl.textContent = (Math.max(1, Math.min(99, cpu))) + '%';
-
-    const connections = Math.floor(rand(12, 120) + p/1.5);
-    const packets = Math.floor(rand(200, 20000) + p*120);
-    connEl.textContent = connections;
-    packetsEl.textContent = packets;
-
-    statusBadge.textContent = (p > 95 && dir === -1) ? 'SYNC' : (p < 5 && dir === 1) ? 'IDLE' : 'OK';
-
-    if(Math.random() < 0.6){
-      const noise = Array.from({length: Math.floor(rand(24,72))}, () => Math.random() < 0.6 ? (Math.random()<0.5? '01':'10') : Math.floor(rand(0,9))).join('');
-      consoleFeed.textContent = noise;
+  function typeBoot() {
+    if (bootIdx < bootLines.length) {
+      bootContent += bootLines[bootIdx] + '\n';
+      bootText.textContent = bootContent;
+      bootText.appendChild(bootCursor);
+      bootIdx++;
+      setTimeout(typeBoot, 50 + Math.random() * 80);
     } else {
-      const events = [
-        'auth: token validated',
-        'handshake: tls v1.3',
-        'probe: 192.168.1.' + Math.floor(rand(2,250)),
-        'svc: sshd[1423] alive',
-        'firewall: accept ephemeral 443',
-        'db: query exec 12ms',
-        'ai: model warmed',
-        'cache: miss /img/123.png',
-        'update: package index sync'
-      ];
-      consoleFeed.textContent = events[Math.floor(rand(0, events.length))] + '  ·  ' + Math.floor(Date.now()%100000);
+      setTimeout(() => {
+        bootScreen.classList.add('hidden');
+        initTerminal();
+      }, 600);
     }
   }
-  setInterval(updateStats, 120);
-  updateStats();
 
-  // ----- terminal behaviour: content area scrolls; input pinned at bottom of terminal -----
-  const input = document.getElementById('command-input');
+  // Start boot sequence
+  setTimeout(typeBoot, 300);
 
-  // small helper to append outputs
-  function addOutput(text, isError, allowHTML = false) {
-    const div = document.createElement('div');
-    div.className = 'output';
-    if(isError) div.style.color = '#ff6b6b';
-    if(allowHTML) {
-      div.innerHTML = text;
-    } else {
-      div.textContent = text;
+  // === TERMINAL INIT ===
+  function initTerminal() {
+    const termContent = document.getElementById('termContent');
+    const outputContainer = document.getElementById('outputContainer');
+    const input = document.getElementById('command-input');
+    const autocomplete = document.getElementById('autocomplete');
+
+    let history = [];
+    let histIdx = -1;
+    let startTime = Date.now();
+    let selectedAutocomplete = -1;
+
+    // Welcome message
+    typeOutput(`
+┌──────────────────────────────────────────────────────────────┐
+│  Welcome to Ayush Charjan's Interactive Terminal Portfolio   │
+│  ──────────────────────────────────────────────────────────  │
+│  Cybersecurity Specialist · Cloud Engineer · Developer       │
+└──────────────────────────────────────────────────────────────┘
+
+Type 'help' for available commands, or try 'neofetch' for system info.
+`, false, () => input.focus());
+
+    // === COMMANDS ===
+    const commands = {
+      help: {
+        desc: 'Show available commands',
+        fn: () => `
+┌─[ AVAILABLE COMMANDS ]────────────────────────────────────────┐
+│                                                               │
+│  PORTFOLIO                                                    │
+│  ─────────                                                    │
+│  about        Display profile information                     │
+│  skills       Show technical skills                           │
+│  projects     List all projects                               │
+│  experience   Display work experience                         │
+│  education    Show educational background                     │
+│  achievements Display certifications & achievements           │
+│  contact      Show contact information                        │
+│  resume       View/download resume                            │
+│                                                               │
+│  SYSTEM                                                       │
+│  ──────                                                       │
+│  neofetch     Display system information                      │
+│  whoami       Show current user                               │
+│  date         Show current date and time                      │
+│  uptime       Show session uptime                             │
+│  pwd          Print working directory                         │
+│  ls           List available sections                         │
+│  history      Show command history                            │
+│  clear        Clear terminal screen                           │
+│                                                               │
+│  FUN                                                          │
+│  ───                                                          │
+│  matrix       Toggle Matrix rain effect                       │
+│  sudo         Try to gain root access ;)                      │
+│  cowsay       Make a cow say something                        │
+│                                                               │
+│  Tip: Use Tab for autocomplete, ↑↓ for history                │
+└───────────────────────────────────────────────────────────────┘`
+      },
+
+      about: {
+        desc: 'Display profile information',
+        fn: () => `
+╔══════════════════════════════════════════════════════════════╗
+║                      AYUSH CHARJAN                           ║
+║    Certified Ethical Hacker (CEH) | Cybersecurity & Cloud    ║
+╚══════════════════════════════════════════════════════════════╝
+
+Entry-level Cybersecurity and Cloud Security professional with 
+hands-on experience in SOC operations, log analysis, vulnerability 
+assessment, and incident response.
+
+Certified Ethical Hacker (CEH) with working knowledge of penetration 
+testing methodologies, OWASP Top 10, and MITRE ATT&CK framework.
+
+┌─ HIGHLIGHTS ─────────────────────────────────────────────────┐
+│ ◆ CEH Certified - EC-Council                                 │
+│ ◆ Top 3 Globally - Google Cloud × Hack2Skill Quiz            │
+│ ◆ 2× Winner - National-Level Hackathons                      │
+│ ◆ AWS Certified Cloud Practitioner                           │
+│ ◆ Currently @ Bajaj Finserv (Application Dev Intern)         │
+└──────────────────────────────────────────────────────────────┘
+
+Seeking: SOC Analyst · Cloud Security Engineer · Security Engineer`
+      },
+
+      skills: {
+        desc: 'Show technical skills',
+        fn: () => `
+┌─[ TECHNICAL SKILLS ]─────────────────────────────────────────┐
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ CYBERSECURITY                                         ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ SOC Operations · Incident Response · Log Analysis     ║  │
+│  ║ Vulnerability Assessment · OWASP Top 10               ║  │
+│  ║ MITRE ATT&CK · Penetration Testing                    ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ SECURITY TOOLS                                        ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ Wireshark · Nmap · Burp Suite · Metasploit            ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ SIEM & MONITORING                                     ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ Log Analysis · Security Event Monitoring              ║  │
+│  ║ Alert Triage · SOC-style Environment                  ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ CLOUD SECURITY                                        ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ AWS: IAM, Security Hub, CloudTrail                    ║  │
+│  ║ GCP: VPC, IAM, Security Command Center                ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ PROGRAMMING & FRAMEWORKS                              ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ Python · SQL · Java · C                               ║  │
+│  ║ Django · FastAPI · Flask · Flutter                    ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ SYSTEMS & NETWORKING                                  ║  │
+│  ╠═══════════════════════════════════════════════════════╣  │
+│  ║ Linux · TCP/IP · DNS · HTTP/S · Firewall Concepts     ║  │
+│  ║ Network Traffic Analysis                              ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      projects: {
+        desc: 'List all projects',
+        fn: () => `
+┌─[ PROJECTS ]─────────────────────────────────────────────────┐
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃  01  PRIVACHECK — Android Privacy Analysis            ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│      Static analysis of Android APKs to detect               │
+│      overprivileged permissions and privacy risks.           │
+│      Flagged anomalies across 100+ tested APKs.              │
+│      Stack: Python · Flask · Androguard · Render             │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃  02  ANDROID MALWARE DETECTOR                         ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│      ML classifier trained on 200+ APKs achieving            │
+│      98%+ malware detection accuracy.                        │
+│      Engineered features from API calls & permissions.       │
+│      Stack: Python · Androguard · Scikit-learn               │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃  03  PREPMATE — AI Interview Platform                 ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│      AI-powered interview prep with coding challenges,       │
+│      group discussions, and NLP resume evaluation.           │
+│      Stack: Django · FastAPI · AI/ML                         │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃  04  TRAVELMATE — Tourist Safety System               ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│      Location-based safety scores from crime datasets.       │
+│      Generates travel advisories for tourists.               │
+│      Stack: Django · Flask · FastAPI · JavaScript            │
+│                                                              │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃  05  TELEMEDICINE VOICE ASSISTANT                     ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│      Multilingual voice healthcare assistant for             │
+│      patient triage and appointment scheduling.              │
+│      Stack: Python · FastAPI · Docker · GCP                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      experience: {
+        desc: 'Display work experience',
+        alias: ['exp'],
+        fn: () => `
+┌─[ EXPERIENCE ]───────────────────────────────────────────────┐
+│                                                              │
+│  ╔════════════════════════════════════════════════════════╗ │
+│  ║  APPLICATION DEVELOPMENT INTERN                        ║ │
+│  ║  Bajaj Finserv · Feb 2026 – Present                    ║ │
+│  ╚════════════════════════════════════════════════════════╝ │
+│                                                              │
+│  ├─ Developed Flutter-based cross-platform PoC              │
+│  │  (mobile + web) reducing frontend effort by ~40%          │
+│  └─ Demonstrated unified codebase feasibility for            │
+│     improved maintainability across platforms                │
+│                                                              │
+│  ╔════════════════════════════════════════════════════════╗ │
+│  ║  CYBER SECURITY & DIGITAL FORENSICS INTERN             ║ │
+│  ║  Cyber Secured India (CSI) · Apr 2025 – Jun 2025       ║ │
+│  ╚════════════════════════════════════════════════════════╝ │
+│                                                              │
+│  ├─ Monitored security logs in SOC environment using         │
+│  │  Wireshark, identifying patterns across 50+ daily events  │
+│  ├─ Conducted vulnerability scans with Nmap, documented      │
+│  │  findings using CVSS severity scores                      │
+│  ├─ Assisted in pentests applying OWASP Top 10 methodology   │
+│  │  (SQL injection, XSS identification)                      │
+│  └─ Contributed to root cause analysis for 5+ security       │
+│     events and incident response workflows                   │
+│                                                              │
+│  Tools: Wireshark · Nmap · Burp Suite · OWASP · Linux        │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      education: {
+        desc: 'Show educational background',
+        alias: ['edu'],
+        fn: () => `
+┌─[ EDUCATION ]────────────────────────────────────────────────┐
+│                                                              │
+│  ◉ B.Tech in Computer Science & Engineering                  │
+│    ┌──────────────────────────────────────────────────────┐ │
+│    │ Deogiri Institute of Engineering and Management      │ │
+│    │ Studies (DIEMS), Aurangabad                          │ │
+│    │ Duration: 2022 – 2026 (Expected)                     │ │
+│    └──────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ◉ Higher Secondary Certificate (HSC)                        │
+│    ┌──────────────────────────────────────────────────────┐ │
+│    │ Kendriya Vidyalaya Sangathan, CBSE                   │ │
+│    │ Year: 2022 · Score: 74.2%                            │ │
+│    └──────────────────────────────────────────────────────┘ │
+│                                                              │
+│  ◉ Secondary School Certificate (SSC)                        │
+│    ┌──────────────────────────────────────────────────────┐ │
+│    │ Kendriya Vidyalaya Sangathan, CBSE                   │ │
+│    │ Year: 2020 · Score: 77%                              │ │
+│    └──────────────────────────────────────────────────────┘ │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      achievements: {
+        desc: 'Display certifications & achievements',
+        alias: ['ach'],
+        fn: () => `
+┌─[ CERTIFICATIONS & ACHIEVEMENTS ]────────────────────────────┐
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ CERTIFICATIONS                                        ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│  ✓ Certified Ethical Hacker (CEH) — EC-Council              │
+│  ✓ AWS Certified Cloud Practitioner                         │
+│  ✓ Google Cloud — Associate Cloud Engineer (Course)         │
+│  ✓ Coursera — Computer Networking (Google)                  │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ HACKATHONS & COMPETITIONS                             ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│  🏆 2× WINNER - National-Level Hackathons                    │
+│  🌍 TOP 3 GLOBALLY - Google Cloud × Hack2Skill Quiz         │
+│                                                              │
+│  ╔═══════════════════════════════════════════════════════╗  │
+│  ║ ACTIVITIES & LEADERSHIP                               ║  │
+│  ╚═══════════════════════════════════════════════════════╝  │
+│  🎤 Conducted technical workshops on cybersecurity topics    │
+│  🤾 National-Level Handball Player                           │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      contact: {
+        desc: 'Show contact information',
+        fn: () => ({
+          html: true,
+          text: `
+┌─[ CONTACT INFORMATION ]──────────────────────────────────────┐
+│                                                              │
+│  ╔════════════════════════════════════════════════════════╗ │
+│  ║  Let's Connect!                                        ║ │
+│  ╚════════════════════════════════════════════════════════╝ │
+│                                                              │
+│  📧 Email     <a href="mailto:ayushmcharjan@gmail.com">ayushmcharjan@gmail.com</a>                       │
+│                                                              │
+│  📱 Phone     +91-8275535864                                 │
+│                                                              │
+│  💼 LinkedIn  <a href="https://www.linkedin.com/in/ayush-charjan" target="_blank" rel="noopener">linkedin.com/in/ayush-charjan</a>                 │
+│                                                              │
+│  🐙 GitHub    <a href="https://github.com/ayush-charjan" target="_blank" rel="noopener">github.com/ayush-charjan</a>                       │
+│                                                              │
+│  🏅 Credly    <a href="https://credly.com/users/ayush-charjan" target="_blank" rel="noopener">credly.com/users/ayush-charjan</a>                 │
+│                                                              │
+│  ────────────────────────────────────────────────────────── │
+│  📍 Location: Aurangabad, Maharashtra, India                 │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+        })
+      },
+
+      resume: {
+        desc: 'View/download resume',
+        alias: ['cv', 'urhired'],
+        fn: () => ({
+          html: true,
+          text: `
+┌─[ RESUME ]───────────────────────────────────────────────────┐
+│                                                              │
+│  📄 View or download my resume:                              │
+│                                                              │
+│  <a href="https://drive.google.com/file/d/1Ud-yw0fHT2893fpkEcr-7T7jI7hxUbiZ/view?usp=sharing" target="_blank" rel="noopener">► Click here to open Resume (Google Drive)</a>               │
+│                                                              │
+│  ────────────────────────────────────────────────────────── │
+│  Tip: Right-click the link to download or open in new tab   │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+        })
+      },
+
+      neofetch: {
+        desc: 'Display system information',
+        fn: () => ({
+          html: true,
+          text: `<div class="neofetch-wrap">
+<div class="neofetch-logo">
+        ▄▄▄▄▄▄▄
+       ██╔════╝
+       ███████╗
+       ╚════██║
+       ███████║
+       ╚══════╝
+    ▀▀▀▀▀▀▀▀▀▀▀
+</div>
+<div class="neofetch-info">
+<span class="label">ayush</span><span class="value">@portfolio</span>
+──────────────────────
+<span class="label">OS:</span> <span class="value">AyushOS v1.0.0 (Web-based)</span>
+<span class="label">Host:</span> <span class="value">GitHub Pages</span>
+<span class="label">Kernel:</span> <span class="value">JavaScript ES2024</span>
+<span class="label">Uptime:</span> <span class="value" id="neo-uptime">0 mins</span>
+<span class="label">Shell:</span> <span class="value">portfolio-sh 1.0</span>
+<span class="label">Resolution:</span> <span class="value">${window.innerWidth}x${window.innerHeight}</span>
+<span class="label">Theme:</span> <span class="value">CRT Green [Dark]</span>
+<span class="label">Terminal:</span> <span class="value">Interactive Portfolio Terminal</span>
+<span class="label">CPU:</span> <span class="value">${navigator.hardwareConcurrency || 4} cores @ browser</span>
+<span class="label">Memory:</span> <span class="value">Unlimited (Cloud)</span>
+
+<div class="neofetch-colors">
+  <span style="background:#1a1a1a"></span>
+  <span style="background:#ff4444"></span>
+  <span style="background:#33ff33"></span>
+  <span style="background:#ffb000"></span>
+  <span style="background:#4444ff"></span>
+  <span style="background:#ff44ff"></span>
+  <span style="background:#00ffff"></span>
+  <span style="background:#ffffff"></span>
+</div>
+</div>
+</div>`
+        })
+      },
+
+      whoami: {
+        desc: 'Show current user',
+        fn: () => 'ayush'
+      },
+
+      date: {
+        desc: 'Show current date and time',
+        fn: () => new Date().toString()
+      },
+
+      uptime: {
+        desc: 'Show session uptime',
+        fn: () => {
+          const elapsed = Date.now() - startTime;
+          const secs = Math.floor(elapsed / 1000);
+          const mins = Math.floor(secs / 60);
+          const hrs = Math.floor(mins / 60);
+          return ` ${hrs}:${String(mins % 60).padStart(2,'0')}:${String(secs % 60).padStart(2,'0')} up, 1 user, load average: 0.42, 0.38, 0.35`;
+        }
+      },
+
+      pwd: {
+        desc: 'Print working directory',
+        fn: () => '/home/ayush/portfolio'
+      },
+
+      ls: {
+        desc: 'List available sections',
+        fn: () => `about.txt    achievements.txt    contact.txt    education.txt
+experience.txt    projects/    resume.pdf    skills.txt`
+      },
+
+      history: {
+        desc: 'Show command history',
+        fn: () => history.length ? history.map((c, i) => `  ${i + 1}  ${c}`).join('\n') : '  (no commands in history)'
+      },
+
+      clear: {
+        desc: 'Clear terminal screen',
+        alias: ['cls'],
+        fn: () => { outputContainer.innerHTML = ''; return null; }
+      },
+
+      matrix: {
+        desc: 'Toggle Matrix rain effect',
+        fn: () => {
+          toggleMatrix();
+          return '🎬 Matrix mode toggled. Press any key to exit.';
+        }
+      },
+
+      sudo: {
+        desc: 'Try to gain root access',
+        fn: (args) => {
+          if (!args) return 'usage: sudo <command>';
+          return `[sudo] password for ayush: ********
+Sorry, user ayush is not allowed to execute '${args}' as root.
+Nice try though! 😄`;
+        }
+      },
+
+      cowsay: {
+        desc: 'Make a cow say something',
+        fn: (args) => {
+          const msg = args || 'Moo! Welcome to my portfolio!';
+          const border = '─'.repeat(msg.length + 2);
+          return `
+ ┌${border}┐
+ │ ${msg} │
+ └${border}┘
+        \\   ^__^
+         \\  (oo)\\_______
+            (__)\\       )\\/\\
+                ||----w |
+                ||     ||`;
+        }
+      },
+
+      echo: {
+        desc: 'Print text',
+        fn: (args) => args || ''
+      },
+
+      cat: {
+        desc: 'View file contents',
+        fn: (args) => {
+          if (!args) return 'usage: cat <filename>';
+          const file = args.replace('.txt', '').replace('.pdf', '');
+          if (commands[file]) {
+            const result = commands[file].fn();
+            return typeof result === 'object' ? result : result;
+          }
+          return `cat: ${args}: No such file or directory`;
+        }
+      }
+    };
+
+    // Build command list with aliases
+    const allCommands = {};
+    Object.keys(commands).forEach(cmd => {
+      allCommands[cmd] = commands[cmd];
+      if (commands[cmd].alias) {
+        commands[cmd].alias.forEach(a => {
+          allCommands[a] = commands[cmd];
+        });
+      }
+    });
+
+    // === OUTPUT HELPERS ===
+    function addOutput(text, isError = false, isHtml = false, className = '') {
+      const div = document.createElement('div');
+      div.className = 'output' + (className ? ' ' + className : '');
+      if (isError) div.classList.add('error');
+      if (isHtml) {
+        div.innerHTML = text;
+      } else {
+        div.textContent = text;
+      }
+      outputContainer.appendChild(div);
+      termContent.scrollTop = termContent.scrollHeight;
     }
-    outputContainer.appendChild(div);
-    // keep latest visible
-    termContent.scrollTop = termContent.scrollHeight;
-  }
 
-  function addInputEcho(cmd) {
-    const div = document.createElement('div');
-    div.className = 'output';
-    div.textContent = `ayush@terminal:~$ ${cmd}`;
-    outputContainer.appendChild(div);
-    termContent.scrollTop = termContent.scrollHeight;
-  }
+    function typeOutput(text, isHtml = false, callback) {
+      const div = document.createElement('div');
+      div.className = 'output';
+      outputContainer.appendChild(div);
+      
+      let i = 0;
+      const chars = text.split('');
+      
+      function typeChar() {
+        if (i < chars.length) {
+          if (isHtml) {
+            div.innerHTML = text.substring(0, i + 1);
+          } else {
+            div.textContent += chars[i];
+          }
+          i++;
+          termContent.scrollTop = termContent.scrollHeight;
+          setTimeout(typeChar, 1);
+        } else if (callback) {
+          callback();
+        }
+      }
+      typeChar();
+    }
 
-  // ----- core commands object (kept minimal here; you can expand later) -----
-  const commands = {
-    help: () => `
-Available Commands:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  about              - Display profile information
-  education (edu)    - Show educational background
-  experience (exp)   - Display work experience
-  projects           - List all projects
-  skills             - Show technical skills
-  resume (urhired)   - View/download resume
-  achievements (ach) - Display certifications & achievements
-  contact            - Show contact information
-  clear              - Clear terminal
-  help               - Show this help message
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Type any command to get started!`,
+    function addInputEcho(cmd) {
+      const div = document.createElement('div');
+      div.className = 'output cmd-echo';
+      div.innerHTML = `<span class="prompt"><span class="user">ayush</span><span class="at">@</span><span class="host">portfolio</span><span class="colon">:</span><span class="path">~</span><span class="symbol">$</span></span> ${escapeHtml(cmd)}`;
+      outputContainer.appendChild(div);
+      termContent.scrollTop = termContent.scrollHeight;
+    }
 
-    about: () => `
-╔══════════════════════════════════════════════════╗
-║              AYUSH CHARJAN                       ║
-║         Cybersecurity Specialist                 ║
-╚══════════════════════════════════════════════════╝
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
-Ayush Charjan is a committed Cybersecurity Enthusiast and Cloud-driven Engineer
-with growing expertise in secure system design, ethical hacking practices, and
-AI-assisted defense methodologies. Passionate about modern security challenges,
-Ayush blends analytical thinking with hands-on technical problem-solving.
-
-He holds strong foundations in cloud platforms, security automation, network
-defense, and vulnerability assessment.
-With a Top-3 global rank in the Google Cloud × Hack2Skill
-competition, Ayush brings both technical depth and practical adaptability.
-
-Focused on next-gen security engineering, Ayush works across cloud environments,
-secure application development, threat analysis, and defensive AI tools, aiming
-to build resilient, scalable, and future-ready security solutions`,
-
-    edu: () => `
-┌─[ EDUCATION ]─────────────────────────────────────┐
-│
-│ ▸ B.Tech in Computer Science & Engineering
-│   Deogiri Institute of Engineering and Management
-│   Studies (DIEMS)
-│   Duration: 2022 – 2026
-│
-│ ▸ HSC (Class 12) - 74.2%
-│   Kendriya Vidyalaya Sangathan, CBSE
-│   Year: 2022
-│
-│ ▸ SSC (Class 10) - 77%
-│   Kendriya Vidyalaya Sangathan, CBSE
-│   Year: 2020
-│
-└───────────────────────────────────────────────────┘`,
-
-    exp: () => `
-┌─[ EXPERIENCE ]────────────────────────────────────┐
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ Cybersecurity Intern                          ║
-│ ║ Jan 2024 – Mar 2024                           ║
-│ ╚═══════════════════════════════════════════════╝
-│
-│ Responsibilities:
-│  ├─ Monitored and analyzed simulated security 
-│  │  alerts and incident logs
-│  ├─ Assisted in vulnerability assessments and
-│  │  penetration testing (basic level)
-│  ├─ Participated in risk reporting and 
-│  │  documentation
-│  └─ Gained exposure to incident response 
-│     processes
-│
-│ Tools Used:
-│  → Wireshark  → Nmap  → Burp Suite  → Linux
-│
-└───────────────────────────────────────────────────┘`,
-    urhired: () => `
-┌─[ RESUME ]───────────────────────────────────────┐
-│ You can view and download my resume from the link below:
-│ 📄 Resume:
-<a href="https://drive.google.com/file/d/1Ud-yw0fHT2893fpkEcr-7T7jI7hxUbiZ/view?usp=sharing" target="_blank" rel="noopener">https://drive.google.com/file/d/1Ud-yw0fHT2893fpkEcr-7T7jI7hxUbiZ/view?usp=sharing
-</a>
-└───────────────────────────────────────────────────┘`,  
-    projects: () => `
-┌─[ PROJECTS ]──────────────────────────────────────┐
-│
-│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-│ ┃ 1. Android Malware Detector                  ┃
-│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-│   Machine learning-based system to detect 
-│   malicious Android apps by analyzing permissions,
-│   intents, and behaviors.
-│   
-│   Stack: Python | Scikit-learn | Androguard
-│
-│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-│ ┃ 2. PrivaCheck                                 ┃
-│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-│   Privacy and security auditing tool to analyze
-│   system configurations, detect vulnerabilities,
-│   and generate compliance reports.
-│   
-│   Stack: Django | Androguard | FastAPI | Python
-│
-│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-│ ┃ 3. Prepmate                                   ┃
-│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-│   AI-driven interview preparation platform with
-│   video conferencing, coding rounds, resume 
-│   analysis, and group discussion evaluation.
-│   
-│   Stack: Django | AI/ML | Python
-│
-│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-│ ┃ 4. melod.ai                                   ┃
-│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-│   Music taste finder / analysis web app (front-end)
-│   - Genre breakdown, mood/energy maps, recommendations.
-│   - Stack (in dev): Python + Frontend (HTML/CSS/JS).
-│
-└───────────────────────────────────────────────────┘`,
-
-    skills: () => `
-┌─[ SKILLS & TECHNOLOGIES ]─────────────────────────┐
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ CYBERSECURITY                                 ║
-│ ╚═══════════════════════════════════════════════╝
-│  • SOC Monitoring          • Threat Hunting
-│  • Incident Response       • Vulnerability Analysis
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ SECURITY TOOLS                                ║
-│ ╚═══════════════════════════════════════════════╝
-│  • Wireshark    • Burp Suite    • Nmap
-│  • Linux        • Androguard
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ PROGRAMMING                                   ║
-│ ╚══════════════════════════════════════════════╝
-│  • Python       • SQL           • C       •Dart
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ CLOUD PLATFORMS                               ║
-│ ╚═══════════════════════════════════════════════╝
-│  • AWS        • Google Cloud   • IBM Cloud
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ DEVELOPMENT                                   ║
-│ ╚══════════════════════════════════════════════╝
-│  • Django       • FastAPI       • Flutter
-│  • HTML         • Tailwind CSS
-│
-└───────────────────────────────────────────────────┘`,
-
-    ach: () => `
-┌─[ CERTIFICATIONS & ACHIEVEMENTS ]─────────────────┐
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ CERTIFICATIONS                                ║
-│ ╚═══════════════════════════════════════════════╝
-│  ✓ Applied for CEH (EC-Council)
-│  ✓ Coursera: Computer Networking
-│
-│ ╔════════════════════════════════════════════════╗
-│ ║ HACKATHONS & COMPETITIONS                     ║
-│ ╚════════════════════════════════════════════════╝
-│  🏆Twice Winner - National-Level Hackathon
-│  🌍 Top 30 Globally - Google Cloud X Hack2Skill
-│      Quiz
-│
-│ ╔═══════════════════════════════════════════════╗
-│ ║ ACTIVITIES                                    ║
-│ ╚═══════════════════════════════════════════════╝
-│  🎤 Conducted UI/UX workshop
-│  🤾 National-Level Handball Player
-│
-└───────────────────────────────────────────────────┘`,
-
-    contact: () => ({
-      html: true,
-      text: `
-┌─[ CONTACT INFORMATION ]───────────────────────────┐
-│
-│  📧 Email:    <a href="mailto:ayushmcharjan@gmail.com" target="_blank">ayushmcharjan@gmail.com</a>
-│  📱 Phone:    +91-8275535864
-│  💼 LinkedIn: <a href="https://www.linkedin.com/in/ayush-charjan" target="_blank" rel="noopener">https://www.linkedin.com/in/ayush-charjan</a>
-│  🐙 GitHub:   <a href="https://github.com/ayush-charjan" target="_blank" rel="noopener">https://github.com/ayush-charjan</a>
-│  🏅 Credly:   <a href="https://credly.com/users/ayush-charjan" target="_blank" rel="noopener">https://credly.com/users/ayush-charjan</a>
-│
-└───────────────────────────────────────────────────┘`
-    })
-  };
-
-  let history = [], histIdx = -1;
-  input.addEventListener('keydown', (e) => {
-    if(e.key === 'Enter') {
-      const raw = input.value.trim();
-      if(!raw) return;
-      addInputEcho(raw);
-      history.push(raw); histIdx = -1;
-      input.value = '';
-      const parts = raw.split(/\s+/);
-      const cmd = parts[0].toLowerCase();
-      const arg = parts.slice(1).join(' ');
-      if(cmd === 'clear' || cmd === 'cls') {
-        outputContainer.innerHTML = '';
+    // === AUTOCOMPLETE ===
+    function updateAutocomplete(val) {
+      if (!val) {
+        autocomplete.classList.remove('show');
         return;
       }
-      if(commands[cmd]) {
-        const result = commands[cmd](arg);
-        if(typeof result === 'object' && result.html) {
-          addOutput(result.text, false, true);
-        } else {
-          addOutput(result);
-        }
-      } else {
-        addOutput(`Command not found: ${cmd}\nType 'help' for available commands.`, true);
+      
+      const matches = Object.keys(commands).filter(cmd => 
+        cmd.startsWith(val.toLowerCase()) && cmd !== val.toLowerCase()
+      );
+      
+      if (matches.length === 0) {
+        autocomplete.classList.remove('show');
+        return;
       }
-    } else if(e.key === 'ArrowUp') {
-      e.preventDefault();
-      if(history.length) {
-        if(histIdx === -1) histIdx = history.length - 1;
-        else histIdx = Math.max(0, histIdx - 1);
-        input.value = history[histIdx] ?? '';
-      }
-    } else if(e.key === 'ArrowDown') {
-      e.preventDefault();
-      if(histIdx !== -1) {
-        histIdx++;
-        if(histIdx >= history.length) { histIdx = -1; input.value = ''; }
-        else input.value = history[histIdx] ?? '';
-      }
-    } else if(e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
-      e.preventDefault();
-      outputContainer.innerHTML = '';
+      
+      autocomplete.innerHTML = matches.slice(0, 6).map((cmd, i) => 
+        `<div class="autocomplete-item${i === 0 ? ' selected' : ''}" data-cmd="${cmd}">
+          <span class="cmd">${cmd}</span>
+          <span class="desc">${commands[cmd].desc}</span>
+        </div>`
+      ).join('');
+      
+      autocomplete.classList.add('show');
+      selectedAutocomplete = 0;
+      
+      autocomplete.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', () => {
+          input.value = item.dataset.cmd;
+          autocomplete.classList.remove('show');
+          input.focus();
+        });
+      });
     }
-  });
 
-  // focus input when clicking anywhere on main-wrap
-  document.querySelector('.main-wrap').addEventListener('click', () => input.focus());
-  input.focus();
+    // === MATRIX EFFECT ===
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    let matrixActive = false;
+    let matrixAnim = null;
+    let matrixDrops = [];
+    let matrixExitHandler = null;
 
-  // run layout once to size terminal properly
-  layoutTerminal();
+    function toggleMatrix() {
+      matrixActive = !matrixActive;
+      if (matrixActive) {
+        // Setup canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.classList.add('active');
+        
+        // Initialize drops
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        matrixDrops = Array(columns).fill(1);
+        
+        // Start animation
+        startMatrixAnimation();
+        
+        // Setup exit handler with delay (remove old one first)
+        if (matrixExitHandler) {
+          document.removeEventListener('keydown', matrixExitHandler);
+        }
+        matrixExitHandler = function(e) {
+          if (e.key !== 'F5' && e.key !== 'F12') {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMatrix();
+          }
+        };
+        // Add small delay so user can see the effect
+        setTimeout(() => {
+          if (matrixActive) {
+            document.addEventListener('keydown', matrixExitHandler);
+          }
+        }, 500);
+      } else {
+        // Stop animation
+        if (matrixAnim) {
+          cancelAnimationFrame(matrixAnim);
+          matrixAnim = null;
+        }
+        canvas.classList.remove('active');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Remove exit handler
+        if (matrixExitHandler) {
+          document.removeEventListener('keydown', matrixExitHandler);
+          matrixExitHandler = null;
+        }
+        // Refocus input
+        input.focus();
+      }
+    }
 
-  // ----- Automatically show recruiter/employer friendly message (animated) -----
-  function runEmployerIntroSequence() {
-    // Sequence lines — tweak wording here if you want
-    const seq = [
-      "Access granted. Elevating privileges...",
-      "Welcome to  Ayush's Portfolio. Ready to build the future?",
-      "",
-      "If you're here, it means you're interested in Ayush's work.",
-      "Go check out the~ sections for skills, experience, and projects.",
-      "Welcome aboard — explore and reach out if you see a fit."
-    ];
+    function startMatrixAnimation() {
+      const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
+      const fontSize = 14;
 
-    // small staged animation for more lively feel
-    let idx = 0;
-    const iv = setInterval(() => {
-      if(idx >= seq.length) { clearInterval(iv); return; }
-      addOutput(seq[idx]);
-      idx++;
-    }, 380);
+      function draw() {
+        if (!matrixActive) return;
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#0f0';
+        ctx.font = fontSize + 'px monospace';
+
+        for (let i = 0; i < matrixDrops.length; i++) {
+          const char = chars[Math.floor(Math.random() * chars.length)];
+          ctx.fillText(char, i * fontSize, matrixDrops[i] * fontSize);
+          if (matrixDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            matrixDrops[i] = 0;
+          }
+          matrixDrops[i]++;
+        }
+        matrixAnim = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    // === INPUT HANDLING ===
+    input.addEventListener('input', () => updateAutocomplete(input.value));
+    
+    input.addEventListener('keydown', (e) => {
+      const items = autocomplete.querySelectorAll('.autocomplete-item');
+      
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (items.length > 0) {
+          const selected = items[selectedAutocomplete] || items[0];
+          input.value = selected.dataset.cmd;
+          autocomplete.classList.remove('show');
+        }
+      } else if (e.key === 'ArrowDown' && autocomplete.classList.contains('show')) {
+        e.preventDefault();
+        items[selectedAutocomplete]?.classList.remove('selected');
+        selectedAutocomplete = (selectedAutocomplete + 1) % items.length;
+        items[selectedAutocomplete]?.classList.add('selected');
+      } else if (e.key === 'ArrowUp') {
+        if (autocomplete.classList.contains('show')) {
+          e.preventDefault();
+          items[selectedAutocomplete]?.classList.remove('selected');
+          selectedAutocomplete = (selectedAutocomplete - 1 + items.length) % items.length;
+          items[selectedAutocomplete]?.classList.add('selected');
+        } else {
+          e.preventDefault();
+          if (history.length) {
+            if (histIdx === -1) histIdx = history.length - 1;
+            else histIdx = Math.max(0, histIdx - 1);
+            input.value = history[histIdx] || '';
+          }
+        }
+      } else if (e.key === 'ArrowDown' && !autocomplete.classList.contains('show')) {
+        e.preventDefault();
+        if (histIdx !== -1) {
+          histIdx++;
+          if (histIdx >= history.length) { histIdx = -1; input.value = ''; }
+          else input.value = history[histIdx] || '';
+        }
+      } else if (e.key === 'Enter') {
+        autocomplete.classList.remove('show');
+        const raw = input.value.trim();
+        if (!raw) return;
+        
+        addInputEcho(raw);
+        history.push(raw);
+        histIdx = -1;
+        input.value = '';
+        
+        const parts = raw.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const args = parts.slice(1).join(' ');
+        
+        if (allCommands[cmd]) {
+          const result = allCommands[cmd].fn(args);
+          if (result !== null) {
+            if (typeof result === 'object' && result.html) {
+              addOutput(result.text, false, true);
+            } else if (result) {
+              addOutput(result);
+            }
+          }
+        } else {
+          addOutput(`bash: ${cmd}: command not found\nType 'help' for available commands.`, true);
+        }
+      } else if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+        e.preventDefault();
+        outputContainer.innerHTML = '';
+      } else if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        addInputEcho(input.value + '^C');
+        input.value = '';
+      }
+    });
+
+    // Click to focus
+    document.querySelector('.main-wrap').addEventListener('click', () => input.focus());
+    input.focus();
+
+    // === SIDEBAR STATS ===
+    function updateStats() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const hrs = Math.floor(elapsed / 3600);
+      const mins = Math.floor((elapsed % 3600) / 60);
+      const secs = elapsed % 60;
+      document.getElementById('uptime').textContent = `${hrs}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      
+      const cpu = Math.floor(Math.random() * 15 + 8);
+      const mem = Math.floor(Math.random() * 20 + 35);
+      document.getElementById('cpu').textContent = cpu + '%';
+      document.getElementById('cpu-bar').style.width = cpu + '%';
+      document.getElementById('memory').textContent = mem + '%';
+      document.getElementById('memory-bar').style.width = mem + '%';
+      
+      document.getElementById('upload').textContent = (Math.random() * 50 + 5).toFixed(1) + ' KB/s';
+      document.getElementById('download').textContent = (Math.random() * 200 + 20).toFixed(1) + ' KB/s';
+      document.getElementById('connections').textContent = Math.floor(Math.random() * 20 + 5);
+      
+      const logs = [
+        'auth: session validated',
+        'net: packet received',
+        'sys: heartbeat OK',
+        'sec: scan complete',
+        'db: query 12ms',
+        'cache: hit ratio 94%'
+      ];
+      document.getElementById('console-feed').textContent = logs[Math.floor(Math.random() * logs.length)];
+    }
+    setInterval(updateStats, 1000);
+    updateStats();
+
+    // === CLOCK ===
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('live-datetime').textContent = now.toLocaleString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // === LAYOUT ===
+    function layoutTerminal() {
+      const header = document.getElementById('topHeader');
+      const footer = document.getElementById('bottomFooter');
+      const page = document.getElementById('page');
+      const mainWrap = document.getElementById('mainWrap');
+      const terminal = document.getElementById('terminal');
+      const sidebar = document.getElementById('sidebar');
+
+      const headerH = header.offsetHeight;
+      const footerH = footer.offsetHeight;
+
+      page.style.paddingTop = headerH + 'px';
+      page.style.paddingBottom = footerH + 'px';
+
+      const available = Math.max(200, window.innerHeight - headerH - footerH - 20);
+      terminal.style.height = available + 'px';
+
+      const sidebarTop = headerH + 14;
+      sidebar.style.top = sidebarTop + 'px';
+      sidebar.style.height = Math.max(200, window.innerHeight - sidebarTop - footerH - 14) + 'px';
+    }
+
+    window.addEventListener('resize', layoutTerminal);
+    layoutTerminal();
   }
-
-  // Show the recruiter message a short time after load so it doesn't clash with header text
-  window.addEventListener('load', () => {
-    setTimeout(runEmployerIntroSequence, 550);
-  });
-
 })();
 </script>
 </body>
