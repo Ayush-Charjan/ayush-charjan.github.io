@@ -572,6 +572,37 @@ body::after {
   border-radius: 2px;
 }
 
+/* === SMOOTH ANIMATIONS === */
+* {
+  scroll-behavior: smooth;
+}
+
+.output {
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === SELECTION STYLING === */
+::selection {
+  background: rgba(51, 255, 51, 0.3);
+  color: #fff;
+}
+
+/* === LINK HOVER GLOW EFFECT === */
+.output a {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.output a:hover {
+  color: #fff;
+  text-shadow: 0 0 12px var(--teal), 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 1024px) {
   .sidebar {
