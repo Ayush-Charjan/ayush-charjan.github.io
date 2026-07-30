@@ -10,6 +10,14 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://ayush-charjan.github.io/" />
 <meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Ayush Charjan | Cybersecurity Terminal Portfolio" />
+<meta name="twitter:description" content="Explore Ayush Charjan's cybersecurity-focused interactive terminal portfolio." />
+<meta name="keywords" content="Ayush Charjan, Cybersecurity, CEH, Ethical Hacker, Cloud Security, AWS, SOC Analyst, Portfolio, Pune, Nashik" />
+<meta name="author" content="Ayush Charjan" />
+<meta name="theme-color" content="#0a0a0a" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -85,7 +93,7 @@
 
 <!-- Footer -->
 <footer class="bottom-footer" id="bottomFooter" role="contentinfo">
-  <span>© 2024 Ayush Charjan</span>
+  <span>© <span id="footerYear">2026</span> Ayush Charjan</span>
   <div class="footer-shortcuts">
     <span><kbd>Ctrl</kbd>+<kbd>L</kbd> clear</span>
     <span><kbd>Tab</kbd> complete</span>
@@ -147,6 +155,9 @@
     }
   }
 
+  // Update footer year dynamically
+  document.getElementById('footerYear').textContent = new Date().getFullYear();
+
   // Start boot sequence
   setTimeout(typeBoot, 300);
 
@@ -207,6 +218,9 @@ Type 'help' for available commands, or try 'neofetch' for system info.
 │  matrix       Toggle Matrix rain effect                       │
 │  sudo         Try to gain root access ;)                      │
 │  cowsay       Make a cow say something                        │
+│  banner       Show ASCII art banner                           │
+│  hire         Check hiring availability                       │
+│  social       Show all social links                           │
 │                                                               │
 │  Tip: Use Tab for autocomplete, ↑↓ for history                │
 └───────────────────────────────────────────────────────────────┘`
@@ -229,10 +243,10 @@ testing methodologies, OWASP Top 10, and MITRE ATT&CK framework.
 
 ┌─ HIGHLIGHTS ─────────────────────────────────────────────────┐
 │ ◆ CEH Certified - EC-Council                                 │
-│ ◆ Top 3 Globally - Google Cloud × Hack2Skill Quiz            │
+│ ◆ Top 3 Globally - Google Cloud × Hack2Skill                 │
 │ ◆ 2× Winner - National-Level Hackathons                      │
 │ ◆ AWS Certified Cloud Practitioner                           │
-│ ◆ Currently @ Bajaj Finserv (Application Dev Intern)         │
+│ ◆ Currently @ Bajaj Finserv (App Dev Intern)                 │
 └──────────────────────────────────────────────────────────────┘
 
 Seeking: SOC Analyst · Cloud Security Engineer · Security Engineer`
@@ -377,7 +391,7 @@ Seeking: SOC Analyst · Cloud Security Engineer · Security Engineer`
 │  ◉ B.Tech in Computer Science & Engineering                  │
 │    ┌──────────────────────────────────────────────────────┐ │
 │    │ Deogiri Institute of Engineering and Management      │ │
-│    │ Studies (DIEMS), Aurangabad                          │ │
+│    │ Studies (DIEMS), Chh.Sambhajinagar(Aurangabad)         │ │
 │    │ Duration: 2022 – 2026 (Expected)                     │ │
 │    └──────────────────────────────────────────────────────┘ │
 │                                                              │
@@ -447,7 +461,8 @@ Seeking: SOC Analyst · Cloud Security Engineer · Security Engineer`
 │  🏅 Credly    <a href="https://credly.com/users/ayush-charjan" target="_blank" rel="noopener">credly.com/users/ayush-charjan</a>                 │
 │                                                              │
 │  ────────────────────────────────────────────────────────── │
-│  📍 Location: Aurangabad, Maharashtra, India                 │
+│  📍 Location: Pune · Nashik · Goa · Chh.Sambhajinagar        │
+│               (Aurangabad), Maharashtra, India               │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘`
         })
@@ -596,6 +611,60 @@ Nice try though! 😄`;
       echo: {
         desc: 'Print text',
         fn: (args) => args || ''
+      },
+
+      banner: {
+        desc: 'Show ASCII art banner',
+        fn: () => `
+   ██████╗██╗   ██╗██████╗ ███████╗██████╗ ███████╗███████╗ ██████╗
+  ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██╔════╝██╔════╝██╔════╝
+  ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝███████╗█████╗  ██║     
+  ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗╚════██║██╔══╝  ██║     
+  ╚██████╗   ██║   ██████╔╝███████╗██║  ██║███████║███████╗╚██████╗
+   ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝
+                                                                   
+     🔒 Securing the Digital World, One Vulnerability at a Time 🔒
+`
+      },
+
+      hire: {
+        desc: 'Show hiring availability',
+        alias: ['available', 'status'],
+        fn: () => `
+┌─[ AVAILABILITY STATUS ]──────────────────────────────────────┐
+│                                                              │
+│  🟢 OPEN TO OPPORTUNITIES                                    │
+│                                                              │
+│  Looking for roles in:                                       │
+│  ├─ SOC Analyst (L1/L2)                                      │
+│  ├─ Cloud Security Engineer                                  │
+│  ├─ Security Engineer                                        │
+│  ├─ Penetration Tester                                       │
+│  └─ Application Security Engineer                            │
+│                                                              │
+│  📍 Preferred: Pune · Nashik · Goa · Remote                  │
+│  🕐 Notice Period: Immediate / 15 days                       │
+│  💼 Experience: Entry-Level + Internships                    │
+│                                                              │
+│  📧 Reach out: ayushmcharjan@gmail.com                       │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+      },
+
+      social: {
+        desc: 'Show all social links',
+        fn: () => ({
+          html: true,
+          text: `
+┌─[ CONNECT WITH ME ]──────────────────────────────────────────┐
+│                                                              │
+│  💼 <a href="https://www.linkedin.com/in/ayush-charjan" target="_blank" rel="noopener">LinkedIn</a>     Connect professionally                   │
+│  🐙 <a href="https://github.com/ayush-charjan" target="_blank" rel="noopener">GitHub</a>       Check out my code                        │
+│  🏅 <a href="https://credly.com/users/ayush-charjan" target="_blank" rel="noopener">Credly</a>       View my certifications                   │
+│  📧 <a href="mailto:ayushmcharjan@gmail.com">Email</a>        Drop me a message                        │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘`
+        })
       },
 
       cat: {
@@ -897,6 +966,12 @@ Nice try though! 😄`;
         'net: packet received',
         'sys: heartbeat OK',
         'sec: scan complete',
+        'ssl: certificate valid',
+        'firewall: rule matched',
+        'dns: query resolved',
+        'http: 200 OK',
+        'ssh: connection secure',
+        'audit: log rotated',
         'db: query 12ms',
         'cache: hit ratio 94%'
       ];
